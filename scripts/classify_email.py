@@ -1,55 +1,90 @@
 import pickle
+import os
 import re
 import string
+from google.auth.transport.requests import Request
+from google.oauth2.credentials import Credentials
+from google_auth_oauthlib.flow import InstalledAppFlow
+from googleapiclient.discovery import build
 
-# 1️⃣ Load the Trained Model (Pipeline)
-MODEL_PATH = "../models/spam_classifier.pkl"
+# Gmail API Scopes
+SCOPES = ["https://www.googleapis.com/auth/gmail.readonly"]
 
-try:
-    with open(MODEL_PATH, "rb") as model_file:
-        pipeline = pickle.load(model_file)  # This includes both vectorizer & classifier
-    print("✅ Model loaded successfully.")
-except FileNotFoundError:
-    print(f"❌ Error: Model file not found at {MODEL_PATH}")
-    exit()
+# 1️⃣ Authenticate & Connect to Gmail API
+def authenticate_gmail():
+    creds = None
+    TOKEN_PATH = "credentials/token.json"  # Stores OAuth token
 
-# 2️⃣ Preprocessing Function (same as in training)
+    # Load saved credentials
+    if os.path.exists(TOKEN_PATH):
+        creds = Credentials.from_authorized_user_file(TOKEN_PATH, SCOPES)
+
+    # If no valid credentials, authenticate user
+    if not creds or not creds.valid:
+        if creds and creds.expired and creds.refresh_token:
+            creds.refresh(Request())
+        else:
+            flow = InstalledAppFlow.from_client_secrets_file("credentials/credentials.json", SCOPES)
+            creds = flow.run_local_server(port=8080)
+
+        # Save credentials
+        with open(TOKEN_PATH, "w") as token_file:
+            token_file.write(creds.to_json())
+
+    return build("gmail", "v1", credentials=creds)
+
+# 2️⃣ Fetch Emails from Inbox
+def fetch_emails(service, max_results=9):
+    """Fetch recent emails from Gmail."""
+    result = service.users().messages().list(userId="me", maxResults=max_results).execute()
+    messages = result.get("messages", [])
+
+    emails = []
+    for msg in messages:
+        msg_data = service.users().messages().get(userId="me", id=msg["id"]).execute()
+        email_snippet = msg_data.get("snippet", "")
+        emails.append(email_snippet)
+
+    return emails
+
+# 3️⃣ Load Spam Classifier Model
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # Moves up one directory
+MODEL_PATH = os.path.join(BASE_DIR, "models", "spam_classifier.pkl")
+
+if not os.path.exists(MODEL_PATH):
+    print(f"❌ Model file not found at: {MODEL_PATH}. Please train the model first.")
+    exit(1)
+
+with open(MODEL_PATH, "rb") as model_file:
+    pipeline = pickle.load(model_file)
+
+# 4️⃣ Preprocessing Function
 def preprocess_text(text):
-    """Clean and preprocess email text."""
+    """Clean email text before classification."""
     if not text or not isinstance(text, str):
         return ""
     text = text.lower()
-    text = re.sub(r'\d+', '', text)  # Remove numbers
-    text = text.translate(str.maketrans('', '', string.punctuation))  # Remove punctuation
+    text = re.sub(r"\d+", "", text)  # Remove numbers
+    text = text.translate(str.maketrans("", "", string.punctuation))  # Remove punctuation
     text = text.strip()
     return text
 
-# 3️⃣ Function to Classify an Email
+# 5️⃣ Classify Email
 def classify_email(email_text):
-    """Classify email as Spam or Not Spam."""
-    email_text = preprocess_text(email_text)  # Clean text
-    
-    # Check if the email is empty after preprocessing
+    """Classify fetched Gmail emails as Spam or Not Spam."""
+    email_text = preprocess_text(email_text)
     if not email_text:
         return "Not Spam (Empty Email)"
-    
-    prediction = pipeline.predict([email_text])  # Predict using the trained model
-    
-    # Debugging: Print raw prediction value
-    print(f"🔎 Raw Prediction: {prediction[0]}")  
-    
+
+    prediction = pipeline.predict([email_text])
     return "Spam" if prediction[0] == 1 else "Not Spam"
 
-# 4️⃣ Example Usage
+# 6️⃣ Main Function
 if __name__ == "__main__":
-    test_emails = [
-        "Congratulations! You have won a $1000 gift card. Click here to claim.",  # Likely Spam
-        "Meeting scheduled at 3 PM. Please confirm your availability.",  # Not Spam
-        "Hurry! Limited time offer on discount coupons.",  # Likely Spam
-        "Hey John, can you send me the report?",  # Not Spam
-        ""  # Edge case: Empty email
-    ]
+    service = authenticate_gmail()
+    fetched_emails = fetch_emails(service)
 
-    for email in test_emails:
+    print("\n📬 **Fetched Emails & Classification**:")
+    for email in fetched_emails:
         print(f"\n📩 Email: {email}")
         print(f"📝 Prediction: {classify_email(email)}")

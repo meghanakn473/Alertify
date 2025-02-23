@@ -12,7 +12,7 @@ from sklearn.metrics import accuracy_score
 from imblearn.over_sampling import SMOTE
 
 # 1️⃣ Load Dataset
-DATA_PATH = r"C:\Alertify\data\spam_or_not_spam.csv"
+DATA_PATH = r"C:\Users\megha\Alertify\data\spam_or_not_spam.csv"
 MODEL_DIR = "../models"
 MODEL_PATH = os.path.join(MODEL_DIR, "spam_classifier.pkl")
 VECTORIZER_PATH = os.path.join(MODEL_DIR, "vectorizer.pkl")
