@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Submit Form</title>
+    <style>
+        .keyword-container {
+            margin: 10px 0;
+        }
+        .keyword {
+            display: inline-block;
+            padding: 8px 12px;
+            margin: 5px;
+            background-color: #007bff;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .keyword:hover {
+            background-color: #0056b3;
+        }
+    </style>
+    <script>
+        function addKeyword(keyword) {
+            let keywordInput = document.getElementById("keywords");
+            if (!keywordInput.value.includes(keyword)) {
+                keywordInput.value += keywordInput.value ? , ${keyword} : keyword;
+            }
+        }
+    </script>
+</head>
+<body>
+    <h2>Submit Your Details</h2>
+    <form action="/submit" method="POST">
+        <label for="name">Name:</label>
+        <input type="text" id="name" name="name" placeholder="Enter your name" required>
+        <br><br>
+
+        <label for="email">Email:</label>
+        <input type="email" id="email" name="email" placeholder="Enter your email" required>
+        <br><br>
+
+        <label for="phone_number">WhatsApp Phone Number:</label>
+        <input type="text" id="phone_number" name="phone_number" placeholder="Enter your WhatsApp phone number" required>
+        <br><br>
+
+        <label for="keywords">Keywords:</label>
+        <input type="text" id="keywords" name="keywords" placeholder="Enter important keywords" required>
+        <br><br>
+
+        <h3>Suggested Keywords:</h3>
+        <div class="keyword-container">
+            <span class="keyword" onclick="addKeyword('urgent')">urgent</span>
+            <span class="keyword" onclick="addKeyword('important')">important</span>
+            <span class="keyword" onclick="addKeyword('meeting')">meeting</span>
+            <span class="keyword" onclick="addKeyword('reminder')">reminder</span>
+            <span class="keyword" onclick="addKeyword('deadline')">deadline</span>
+            <span class="keyword" onclick="addKeyword('project')">project</span>
+        </div>
+
+        <button type="submit">Submit</button>
+    </form>
+</body>
+</html>
