@@ -25,11 +25,14 @@
     <script>
         function addKeyword(keyword) {
             let keywordInput = document.getElementById("keywords");
-            if (!keywordInput.value.includes(keyword)) {
-                keywordInput.value += keywordInput.value ? , ${keyword} : keyword;
+            let currentKeywords = keywordInput.value.split(", ").map(k => k.trim());
+            
+            if (!currentKeywords.includes(keyword)) {
+                keywordInput.value = currentKeywords.filter(k => k !== "").concat(keyword).join(", ");
             }
         }
     </script>
+    
 </head>
 <body>
     <h2>Submit Your Details</h2>

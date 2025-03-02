@@ -3,7 +3,8 @@ import firebase_admin
 from firebase_admin import credentials, firestore
 import os
 
-app = Flask(__name__)
+app = Flask(__name__, template_folder="templates")
+
 
 # Initialize Firebase
 firebase_config_path = "config/alertify-firebase.json"
@@ -47,5 +48,5 @@ def submit():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-if __name__ == "_main_":
+if __name__ == "__main__":
     app.run(debug=True)
