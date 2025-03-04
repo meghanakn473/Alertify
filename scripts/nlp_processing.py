@@ -77,11 +77,11 @@ def fetch_user_keywords():
 
 user_keywords_data = fetch_user_keywords()
 
-
 # 🌟 Twilio Setup
 TWILIO_SID = os.getenv("TWILIO_SID")
 TWILIO_AUTH_TOKEN = os.getenv("TWILIO_AUTH_TOKEN")
-FIREBASE_CREDENTIALS_PATH = os.getenv("FIREBASE_CREDENTIALS_PATH")  # Twilio sandbox number
+TWILIO_WHATSAPP_NUMBER = os.getenv("TWILIO_WHATSAPP_NUMBER")
+
 client = Client(TWILIO_SID, TWILIO_AUTH_TOKEN)
 
 def get_user_phone(user_id):
@@ -136,3 +136,4 @@ def process_and_notify():
 
 # 🌟 Run Processing & Notification
 process_and_notify()
+ 
