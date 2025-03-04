@@ -76,3 +76,63 @@ def fetch_user_keywords():
         exit(1)
 
 user_keywords_data = fetch_user_keywords()
+
+
+# 🌟 Twilio Setup
+TWILIO_SID = os.getenv("TWILIO_SID")
+TWILIO_AUTH_TOKEN = os.getenv("TWILIO_AUTH_TOKEN")
+FIREBASE_CREDENTIALS_PATH = os.getenv("FIREBASE_CREDENTIALS_PATH")  # Twilio sandbox number
+client = Client(TWILIO_SID, TWILIO_AUTH_TOKEN)
+
+def get_user_phone(user_id):
+    """Fetch user phone number from Firestore."""
+    user_ref = db_firestore.collection("users").document(user_id)
+    user = user_ref.get()
+    
+    if user.exists:
+        user_data = user.to_dict()
+        phone = user_data.get("phone_number")  # ✅ Correct field name
+        if phone:
+            return f"whatsapp:+91{phone}"  # ✅ Add country code
+    return None
+
+def send_whatsapp_message(user_id, message):
+    """Send a WhatsApp notification to the user."""
+    phone_number = get_user_phone(user_id)
+    if phone_number:
+        response = client.messages.create(
+            from_=TWILIO_WHATSAPP_NUMBER,
+            body=message,
+            to=phone_number
+        )
+        print(f"✅ Message sent to {phone_number}: {response.sid}")
+    else:
+        print(f"❌ No phone number found for user {user_id}")
+
+# 🌟 Match Emails with Keywords & Notify Users
+def process_and_notify():
+    for user in user_keywords_data:
+        user_phone = user["phone_number"]
+        keywords = user["keywords"]
+        
+        if not keywords:
+            print(f"⚠ No keywords for {user_phone}. Skipping...")
+            continue
+        
+        match_found = False  # Flag to track if a match is found
+        
+        for email in processed_emails:
+            if any(keyword in email for keyword in keywords):
+                print(f"✅ Match found! Sending WhatsApp notification to {user_phone}...")
+                try:
+                    send_whatsapp_message(user_phone, f"📢 Match found in email: {email[:100]}")
+                    match_found = True  # Set flag to True if match found
+                except Exception as e:
+                    print(f"❌ Failed to send WhatsApp notification: {e}")
+                break  # Stop checking once a match is found
+        
+        if not match_found:
+            print(f"⚠ No matching emails found for {user_phone}.")
+
+# 🌟 Run Processing & Notification
+process_and_notify()
