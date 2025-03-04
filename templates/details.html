@@ -24,15 +24,15 @@
     </style>
     <script>
         function addKeyword(keyword) {
-            let keywordInput = document.getElementById("keywords");
-            let currentKeywords = keywordInput.value.split(", ").map(k => k.trim());
+            let keywordInput = document.getElementById("user_keywords");
+            let currentKeywords = keywordInput.value ? keywordInput.value.split(",").map(k => k.trim()) : [];
             
             if (!currentKeywords.includes(keyword)) {
-                keywordInput.value = currentKeywords.filter(k => k !== "").concat(keyword).join(", ");
+                currentKeywords.push(keyword);
+                keywordInput.value = currentKeywords.join(", ");
             }
         }
     </script>
-    
 </head>
 <body>
     <h2>Submit Your Details</h2>
@@ -49,12 +49,12 @@
         <input type="text" id="phone_number" name="phone_number" placeholder="Enter your WhatsApp phone number" required>
         <br><br>
 
-        <label for="keywords">Keywords:</label>
-        <input type="text" id="keywords" name="keywords" placeholder="Enter important keywords" required>
+        <label for="user_keywords">Keywords:</label>
+        <input type="text" id="user_keywords" name="keywords" placeholder="Enter important keywords" required>
         <br><br>
 
         <h3>Suggested Keywords:</h3>
-        <div class="keyword-container">
+        <div class="keyword-container">  
             <span class="keyword" onclick="addKeyword('urgent')">urgent</span>
             <span class="keyword" onclick="addKeyword('important')">important</span>
             <span class="keyword" onclick="addKeyword('meeting')">meeting</span>

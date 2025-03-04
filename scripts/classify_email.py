@@ -2,6 +2,7 @@ import pickle
 import os
 import re
 import string
+import json
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
@@ -48,7 +49,7 @@ def fetch_emails(service, max_results=9):
     return emails
 
 # 3️⃣ Load Spam Classifier Model
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # Moves up one directory
+BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))  # Moves up one directory
 MODEL_PATH = os.path.join(BASE_DIR, "models", "spam_classifier.pkl")
 
 if not os.path.exists(MODEL_PATH):
@@ -79,12 +80,34 @@ def classify_email(email_text):
     prediction = pipeline.predict([email_text])
     return "Spam" if prediction[0] == 1 else "Not Spam"
 
-# 6️⃣ Main Function
+# 6️⃣ Save Not Spam Emails to JSON
+def save_not_spam_emails(not_spam_emails):
+    """Save Not Spam emails to JSON file inside scripts/data/."""
+    DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
+    os.makedirs(DATA_DIR, exist_ok=True)  # Ensure directory exists
+
+    FILE_PATH = os.path.join(DATA_DIR, "not_spam_emails.json")
+
+    with open(FILE_PATH, "w", encoding="utf-8") as file:
+        json.dump(not_spam_emails, file, indent=4, ensure_ascii=False)
+
+    print(f"\n✅ Not Spam emails saved to: {FILE_PATH}")
+
+# 7️⃣ Main Function
 if __name__ == "__main__":
     service = authenticate_gmail()
     fetched_emails = fetch_emails(service)
 
-    print("\n📬 **Fetched Emails & Classification**:")
+    not_spam_emails = []
+
+    print("\n📬 *Fetched Emails & Classification*:")
     for email in fetched_emails:
+        classification = classify_email(email)
         print(f"\n📩 Email: {email}")
-        print(f"📝 Prediction: {classify_email(email)}")
+        print(f"📝 Prediction: {classification}")
+
+        if classification == "Not Spam":
+            not_spam_emails.append(email)  # Store Not Spam emails
+
+    # Save Not Spam emails to JSON
+    save_not_spam_emails(not_spam_emails)
